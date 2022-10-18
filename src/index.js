@@ -16,36 +16,35 @@ function onInput(e) {
   const inputValueWithTrim = e.target.value.trim();
 
   if (inputValueWithTrim.length === 0) {
-    countryInfo.innerHTML = '';
-    countryList.innerHTML = '';
+    clearMarkup();
     return;
   }
 
   fetchCountries(inputValueWithTrim)
-    .then(countries => {
-      console.log(countries);
-      if (countries.length === 1) {
-        countryList.classList.add('info');
-        countryList.innerHTML = '';
-        countryInfo.innerHTML = '';
-        renderMarkupCountries(countries);
-        renderMarkupInfo(countries[0]);
-      } else if (countries.length > 1 && countries.length <= 10) {
-        countryList.classList.remove('info');
-        countryInfo.innerHTML = '';
-        renderMarkupCountries(countries);
-      } else if (countries.length > 10) {
-        countryList.innerHTML = '';
-        countryInfo.innerHTML = '';
-        Notify.info(
-          'Too many matches found. Please enter a more specific name.'
-        );
-      }
-    })
-    .catch(() => Notify.failure('Oops, there is no country with that name'));
+    .then(renderMarkup)
+    .catch(() => {
+      clearMarkup();
+      Notify.failure('Oops, there is no country with that name');
+    });
 }
 
-function renderMarkupCountries(countries) {
+function renderMarkup(countries) {
+  if (countries.length === 1) {
+    countryList.classList.add('info');
+    clearMarkup();
+    renderMarkupList(countries);
+    renderMarkupInfo(countries[0]);
+  } else if (countries.length > 1 && countries.length <= 10) {
+    countryList.classList.remove('info');
+    countryInfo.innerHTML = '';
+    renderMarkupList(countries);
+  } else {
+    clearMarkup();
+    Notify.info('Too many matches found. Please enter a more specific name.');
+  }
+}
+
+function renderMarkupList(countries) {
   const markup = countries
     .map(({ flags, name }) => {
       return `<li class="country__item">
@@ -67,4 +66,9 @@ function renderMarkupInfo({ capital, population, languages }) {
      `;
 
   countryInfo.innerHTML = markup;
+}
+
+function clearMarkup() {
+  countryInfo.innerHTML = '';
+  countryList.innerHTML = '';
 }
