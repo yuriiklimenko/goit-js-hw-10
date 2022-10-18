@@ -1,4 +1,8 @@
 import './css/styles.css';
+import debounce from 'lodash.debounce';
+// import API from './js/fetchCountries';
+import { fetchCountries } from './js/fetchCountries';
+import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
 const DEBOUNCE_DELAY = 300;
 
@@ -6,36 +10,61 @@ const input = document.querySelector('#search-box');
 const countryList = document.querySelector('.country-list');
 const countryInfo = document.querySelector('.country-info');
 
-input.addEventListener('input', e => {
-  fetchCountry(e.currentTarget.value).then(countries => {
-    // console.log(countries);
-    renderMarkupCounter(countries);
-  });
-});
+input.addEventListener('input', debounce(onInput, DEBOUNCE_DELAY));
 
-function fetchCountry(country) {
-  return fetch(`https://restcountries.com/v3.1/name/${country}`)
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(response.status);
+function onInput(e) {
+  const inputValueWithTrim = e.target.value.trim();
+
+  if (inputValueWithTrim.length === 0) {
+    countryInfo.innerHTML = '';
+    countryList.innerHTML = '';
+    return;
+  }
+
+  fetchCountries(inputValueWithTrim)
+    .then(countries => {
+      console.log(countries);
+      if (countries.length === 1) {
+        countryList.classList.add('info');
+        countryList.innerHTML = '';
+        countryInfo.innerHTML = '';
+        renderMarkupCountries(countries);
+        renderMarkupInfo(countries[0]);
+      } else if (countries.length > 1 && countries.length <= 10) {
+        countryList.classList.remove('info');
+        countryInfo.innerHTML = '';
+        renderMarkupCountries(countries);
+      } else if (countries.length > 10) {
+        countryList.innerHTML = '';
+        countryInfo.innerHTML = '';
+        Notify.info(
+          'Too many matches found. Please enter a more specific name.'
+        );
       }
-
-      return response.json();
     })
-    .catch(error => {
-      console.log('SuperError!!!', error);
-    });
+    .catch(() => Notify.failure('Oops, there is no country with that name'));
 }
 
-function renderMarkupCounter(countries) {
+function renderMarkupCountries(countries) {
   const markup = countries
     .map(({ flags, name }) => {
-      return `<li>
-                <img class="flag" src="${flags.svg}" alt="flag">
-                 <p>${name.common}</p>
+      return `<li class="country__item">
+                <img class="country__flag" src="${flags.svg}" alt="flag">
+                 <p class="country__name">${name.official}</p>
             </li>`;
     })
     .join('');
 
   countryList.innerHTML = markup;
+}
+
+function renderMarkupInfo({ capital, population, languages }) {
+  const language = Object.values(languages);
+  const markup = `
+          <p class="country__capital"><b>Capital: </b> ${capital}</p>
+          <p class="country__population"><b>Population: </b> ${population}</p>
+          <p class="country__language"><b>Languages: </b> ${language}</p>
+     `;
+
+  countryInfo.innerHTML = markup;
 }
