@@ -1,6 +1,5 @@
 import './css/styles.css';
 import debounce from 'lodash.debounce';
-// import API from './js/fetchCountries';
 import { fetchCountries } from './js/fetchCountries';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
@@ -58,11 +57,13 @@ function renderMarkupList(countries) {
 }
 
 function renderMarkupInfo({ capital, population, languages }) {
-  const language = Object.values(languages);
+  const languagesArr = Object.values(languages);
+  const languagesWithSpace = languagesArr.join(', ');
+  console.log(languagesWithSpace);
   const markup = `
           <p class="country__capital"><b>Capital: </b> ${capital}</p>
           <p class="country__population"><b>Population: </b> ${population}</p>
-          <p class="country__language"><b>Languages: </b> ${language}</p>
+          <p class="country__language"><b>Languages: </b> ${languagesWithSpace}</p>
      `;
 
   countryInfo.innerHTML = markup;
